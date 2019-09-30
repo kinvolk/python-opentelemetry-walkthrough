@@ -21,7 +21,9 @@ function orderDonuts(order){
     }),
     method: 'POST',
     success: function(order_status) {
+      console.log("watch this order_status")
       console.log(order_status)
+      console.log("watch this order_status")
       order.setStatus(JSON.parse(order_status))
       render(order)
       pollStatus(order)
@@ -30,6 +32,8 @@ function orderDonuts(order){
 }
 
 function pollStatus(order){
+  console.log("watch this state")
+  console.log(order._state)
   if(!order.isActive()){
     return
   }

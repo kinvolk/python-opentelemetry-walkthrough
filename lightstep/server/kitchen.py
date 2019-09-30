@@ -13,7 +13,7 @@ class Fryer(Thread):
         self._donuts = donuts
         self._queue = queue
 
-    def start(self):
+    def run(self):
 
         while True:
 
@@ -53,11 +53,13 @@ class KitchenService(object):
     def __init__(self):
 
         self._donuts = []
-        self._fryer = Queue()
+        self._queue = Queue()
 
-        self._queue = Fryer(self._donuts, self._queue, daemon=True)
+        self._fryer = Fryer(self._donuts, self._queue, daemon=True)
 
-    def get_donuts(self):
+        self._fryer.start()
+
+    def get_all_donuts(self):
 
         copied_donuts = []
 
@@ -69,6 +71,7 @@ class KitchenService(object):
 
     def add_donut(self, donut):
 
+        self._donuts.append(donut)
         self._queue.put(donut)
 
 
