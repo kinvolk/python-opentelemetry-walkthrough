@@ -1,0 +1,11 @@
+ * Serving Flask app "__main__" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+Span(name="root_span", context=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x17fb0ed2c01c2795), kind=SpanKind.INTERNAL, parent=Span(name="/order", context=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x86816073d77f2235)), start_time=2019-10-02T14:39:28.793581Z, end_time=2019-10-02T14:39:28.796041Z)
+Span(name="/order", context=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x86816073d77f2235), kind=SpanKind.SERVER, parent=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x0000000000000000), start_time=2019-10-02T14:39:28.792049Z, end_time=2019-10-02T14:39:28.800174Z)
+Span(name="status_span", context=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x702ec798a916be85), kind=SpanKind.INTERNAL, parent=Span(name="/status", context=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x653810ee7a96684a)), start_time=2019-10-02T14:39:29.814196Z, end_time=2019-10-02T14:39:29.814976Z)
+Span(name="/status", context=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x653810ee7a96684a), kind=SpanKind.SERVER, parent=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x0000000000000000), start_time=2019-10-02T14:39:29.813543Z, end_time=2019-10-02T14:39:29.816764Z)
+Span(name="status_span", context=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x9661765fed237649), kind=SpanKind.INTERNAL, parent=Span(name="/status", context=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x1228aa4a025c627a)), start_time=2019-10-02T14:39:30.829684Z, end_time=2019-10-02T14:39:30.830459Z)
+Span(name="/status", context=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x1228aa4a025c627a), kind=SpanKind.SERVER, parent=SpanContext(trace_id=0x00000000000000000000000000000000, span_id=0x0000000000000000), start_time=2019-10-02T14:39:30.828990Z, end_time=2019-10-02T14:39:30.831663Z)
