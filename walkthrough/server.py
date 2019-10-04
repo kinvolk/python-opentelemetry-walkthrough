@@ -18,7 +18,6 @@ from donut import Donut
 from status import NEW_ORDER
 
 
-# Set the factory to be used to create the tracer
 trace.set_preferred_tracer_implementation(lambda T: Tracer())
 
 propagators.set_global_httptextformat(B3Format())
@@ -62,8 +61,6 @@ def order():
 
                 kitchen_consumer.add_donut(donut_data, order_id)
 
-        print('AAAAAAAAAAAAAA')
-
         return kitchen_consumer.check_status(order_id)
 
 
@@ -87,8 +84,6 @@ def add_donut(*args, **kwargs):
             NEW_ORDER
         )
     )
-
-    return '200'
 
 
 @app.route('/kitchen/get_donuts', methods=['GET'])
