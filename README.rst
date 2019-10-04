@@ -1,18 +1,17 @@
-=======================================
-MicroDonuts: An OpenTracing Walkthrough
-=======================================
+=========================================
+MicroDonuts: An OpenTelemetry Walkthrough
+=========================================
 
 
 Welcome to MicroDonuts! This is a sample application and OpenTracing
 walkthrough, written in Python.
 
-OpenTracing is a vendor-neutral, open standard for distributed tracing. To
-learn more, check out [opentracing.io](http://opentracing.io), and try the
-walkthrough below!
+OpenTelemetry is a vendor-neutral, open standard for distributed tracing. To
+learn more, check out http://opentelemetry.io, and try the walkthrough below!
 
 **Note that there are two git branches of note here.**
-- `git checkout master` illustrates a trivial multi-service app with cross-service tracing via OpenTracing
-- `git checkout no-tracing` removes the tracing instrumentation, allowing the reader to add it in themselves
+#. ``git checkout master`` illustrates a trivial multi-service app with cross-service tracing via OpenTracing
+#. ``git checkout no-tracing`` removes the tracing instrumentation, allowing the reader to add it in themselves
 
 Step 0: Setup MicroDonuts
 =========================
@@ -20,31 +19,31 @@ Step 0: Setup MicroDonuts
 Getting it
 ----------
 
-#. Install `virtualenv`: `sudo -H pip3 install virtualenv`
-#. Create a virtual environment: `mkdir microdonuts; virtualenv microdonuts`
-#. Activate the virtual environment: `source microdonuts/bin/activate`
+#. Install ``virtualenv``: ``sudo -H pip3 install virtualenv``
+#. Create a virtual environment: ``mkdir microdonuts; virtualenv microdonuts``
+#. Activate the virtual environment: ``source microdonuts/bin/activate``
 #. Clone this repository
-#. Install the dependencies `pip3 install -r python-opentelemetry-walkthrough/requirements.txt`
+#. Install the dependencies ``pip3 install -r python-opentelemetry-walkthrough/requirements.txt``
 
 Running
 -------
 
-#. `pyhton3 python-opentelemetry-walkthrough/walkthrough/server.py`
-#. Open your web browser, navigate to `http://127.0.0.1:10001` and order yourself some µ-donuts.
+#. ``pyhton3 python-opentelemetry-walkthrough/walkthrough/server.py``
+#. Open your web browser, navigate to ``http://127.0.0.1:10001`` and order yourself some µ-donuts.
 
 MicroDonuts has 4 server endpoints:
 
-#. `/order`
-#. `/status`
-#. `/kitchen/add_donuts`
-#. `/kitchen/get_donuts`
+#. ``/order``
+#. ``/status``
+#. ``/kitchen/add_donuts``
+#. ``/kitchen/get_donuts``
 
 The first 2 serve orders, the last 2 provide kitchen services.
 
-Step 1: Check out the `no-tracing` branch
------------------------------------------
+Step 1: Check out the ``no-tracing`` branch
+-------------------------------------------
 
-The `master` branch in this repository has tracing instrumentation added as
+The ``master`` branch in this repository has tracing instrumentation added as
 described below. To maximize your learnings, do a...
 
 .. code:: bash
@@ -65,15 +64,15 @@ quickly gives you a lot of information about your distributed system, without
 requiring you to change a lot of code.
 
 To do this, let's change the startup of the application to include tracing:
-`cd python-opentelemetry-walkthrough/walkthrough`
+``cd python-opentelemetry-walkthrough/walkthrough``
 
 Start the global tracer
 .......................
 
 In OpenTracing, there is a concept of a global tracer for everyone to access.
 
-Accessing this global tracer is easy, just add these lines to `server.py` under
-`BLOCK 0`:
+Accessing this global tracer is easy, just add these lines to ``server.py`` under
+``BLOCK 0``:
 
 .. code:: python
 
@@ -81,7 +80,7 @@ Accessing this global tracer is easy, just add these lines to `server.py` under
     from opentelemetry.sdk.trace import Tracer
     from opentelemetry.sdk.context.propagation.b3_format import B3Format
 
-Add these lines under `BLOCK 1` too:
+Add these lines under ``BLOCK 1`` too:
 
 .. code:: python
 
@@ -91,19 +90,19 @@ Add these lines under `BLOCK 1` too:
 
     tracer = trace.tracer()
 
-The global tracer is now available as `tracer`.
+The global tracer is now available as ``tracer``.
 
 
 Instrument the HTTP requests
 ............................
 
-This is done in an automatic way by just adding this line under `BLOCK 0`:
+This is done in an automatic way by just adding this line under ``BLOCK 0``:
 
 .. code:: python
 
     from opentelemetry.ext.http_requests import enable
 
-Add also this line under `BLOCK 1`:
+Add also this line under ``BLOCK 1``:
 
 .. code:: python
 
@@ -113,13 +112,13 @@ Instrument Flask
 ................
 
 This example uses Flask to expose the HTTP endpoints. Flask code can
-be traced automatically by adding this line under `BLOCK 0`:
+be traced automatically by adding this line under ``BLOCK 0``:
 
 .. code:: python
 
     from opentelemetry.ext.wsgi import OpenTelemetryMiddleware
 
-Add this line under `BLOCK 2` also:
+Add this line under ``BLOCK 2`` also:
 
 .. code:: python
 
@@ -129,15 +128,15 @@ Add an exporter
 ...............
 
 An exporter is necessary for the span data to be displayed. We'll use the
-`ConsoleExporter` in this example, an exporter that simply prints the span data
-into the console. Add these lines under `BLOCK 0`:
+``ConsoleExporter`` in this example, an exporter that simply prints the span data
+into the console. Add these lines under ``BLOCK 0``:
 
 .. code:: python
 
     from opentelemetry.sdk.trace.export import ConsoleSpanExporter
     from opentelemetry.sdk.trace.export import SimpleExportSpanProcessor
 
-Add this line under `BLOCK 1`:
+Add this line under ``BLOCK 1``:
 
 .. code:: python
 
@@ -145,6 +144,45 @@ Add this line under `BLOCK 1`:
         SimpleExportSpanProcessor(ConsoleSpanExporter())
     )
 
+Use the tracer
+..............
+
+Now is time to use the tracer itself in the server code.
+
+Change the ``order`` function to this:
+
+.. code:: python
+
+    @app.route('/order', methods=['POST'])
+    def order():
+
+        order_id = str(uuid4())
+
+        with tracer.start_span('root_span'):
+
+            for donut_data in loads(next(request.form.keys()))['donuts']:
+
+                for _ in range(donut_data['quantity']):
+
+                    kitchen_consumer.add_donut(donut_data, order_id)
+
+            return kitchen_consumer.check_status(order_id)
+
+Change the ``status`` function to this:
+
+.. code:: python
+
+    @app.route('/status', methods=['POST'])
+    def status():
+
+        with tracer.start_span('status_span'):
+
+            return kitchen_consumer.check_status(
+                loads(next(request.form.keys()))['order_id']
+            )
+
+This will automatically create a span every time each of these functions are
+called.
 
 Step 3: Have fun
 ----------------
