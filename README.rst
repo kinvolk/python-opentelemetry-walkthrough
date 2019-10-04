@@ -10,8 +10,9 @@ OpenTelemetry is a vendor-neutral, open standard for distributed tracing. To
 learn more, check out http://opentelemetry.io, and try the walkthrough below!
 
 **Note that there are two git branches of note here.**
-#. ``git checkout master`` illustrates a trivial multi-service app with cross-service tracing via OpenTracing
-#. ``git checkout no-tracing`` removes the tracing instrumentation, allowing the reader to add it in themselves
+
+#. First, ``git checkout master`` illustrates a trivial multi-service app with cross-service tracing via OpenTracing
+#. Second, ``git checkout no-tracing`` removes the tracing instrumentation, allowing the reader to add it in themselves
 
 Step 0: Setup MicroDonuts
 =========================
@@ -29,7 +30,7 @@ Running
 -------
 
 #. ``pyhton3 python-opentelemetry-walkthrough/walkthrough/server.py``
-#. Open your web browser, navigate to ``http://127.0.0.1:10001`` and order yourself some µ-donuts.
+#. Open your web browser, navigate to ``http://127.0.0.1:8082`` and order yourself some µ-donuts.
 
 MicroDonuts has 4 server endpoints:
 
