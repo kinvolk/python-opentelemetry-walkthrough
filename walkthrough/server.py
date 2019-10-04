@@ -3,8 +3,8 @@ from uuid import uuid4
 
 from flask import Flask, request, render_template
 
-import opentelemetry.ext.http_requests
 from opentelemetry import trace, propagators
+import opentelemetry.ext.http_requests
 from opentelemetry.sdk.trace import Tracer
 from opentelemetry.ext.wsgi import OpenTelemetryMiddleware
 from opentelemetry.ext.http_requests import enable
