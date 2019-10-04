@@ -72,145 +72,89 @@ Start the global tracer
 
 In OpenTracing, there is a concept of a global tracer for everyone to access.
 
-Accessing this global tracer is easy, just add these lines to `server.py` in
+Accessing this global tracer is easy, just add these lines to `server.py` under
 `BLOCK 0`:
 
 .. code:: python
 
     from opentelemetry import trace, propagators
+    from opentelemetry.sdk.trace import Tracer
+    from opentelemetry.sdk.context.propagation.b3_format import B3Format
 
-As a convenience, we already have a function `configureGlobalTracer` that
-works with the MicroDonuts configuration file. In the `main` of 
-`microdonuts/src/main/java/com/otsample/api/App.java`, right after the configuration
-file was loaded, we add:
+Add these lines under `BLOCK 1` too:
 
-```java
-        Properties config = loadConfig(args);
-        if (!configureGlobalTracer(config, "MicroDonuts"))
-            throw new Exception("Could not configure the global tracer");
-```
+.. code:: python
 
-After this, the tracer will be available globally through `io.opentracing.GlobalTracer.get()`.
+    trace.set_preferred_tracer_implementation(lambda T: Tracer())
 
-### Instrument the outgoing HTTP requests
+    propagators.set_global_httptextformat(B3Format())
 
-Our `api` component communicates with the `kitchen` one over HTTP using
-the `OkHttp` library, so we will instrument those requests using a middleware.
-In `microdonuts/src/main/java/com/otsample/api/KitchenConsumer.java`, inside the
-the `KitchenConsumer` constructor:
+    tracer = trace.tracer()
 
-```java
-    TracingInterceptor tracingInterceptor = new TracingInterceptor(
-             GlobalTracer.get(),
-             Arrays.asList(SpanDecorator.STANDARD_TAGS));
-    client = new OkHttpClient.Builder()
-            .addInterceptor(tracingInterceptor)
-            .addNetworkInterceptor(tracingInterceptor)
-            .build();
-```
+The global tracer is now available as `tracer`.
 
-### Instrument the inbound HTTP kitchen server
 
-Similarly, we will use a middleware to trace the incoming HTTP
-requests for the `kitchen` component. In
-`microdonuts/src/main/java/com/otsample/api/KitchenContextHandler.java`,
-inside the constructor do:
+Instrument the HTTP requests
+............................
 
-```java
-    TracingFilter tracingFilter = new TracingFilter(GlobalTracer.get());
-    addFilter(new FilterHolder(tracingFilter), "/*", EnumSet.allOf(DispatcherType.class));
-```
+This is done in an automatic way by just adding this line under `BLOCK 0`:
 
-After this, the incoming requests to `kitchen` will be traced, too.
+.. code:: python
 
-### Check it out in your Tracer
+    from opentelemetry.ext.http_requests import enable
 
-Now that we're all hooked up, try ordering some donuts in the browser. You
-should see the traces appear in your tracer.
+Add also this line under `BLOCK 1`:
 
-Search for traces starting belonging to the `MicroDonuts` component to see the
-patterns of requests that occur when you click the order button.
+.. code:: python
 
-## Step 3: Enhance
+    enable(tracer)
 
-Now that the components in our system are linked up at the networking level, we
-can start adding application level tracing by tying multiple network calls
-together into a single trace.
+Instrument Flask
+................
 
-In MicroDonuts, we'd like to know the time and resources involved with buying a
-donut, from the moment it is ordered to when it is delivered. Let's add
-OpenTracing's context to the requests from the `api` component to the `kitchen`
-one. In `microdonuts/src/main/java/com/otsample/api/ApiContextHandler.java` in
-`OrderServlet` do:
+This example uses Flask to expose the HTTP endpoints. Flask code can
+be traced automatically by adding this line under `BLOCK 0`:
 
-```java
-        @Override
-        public void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException
-        {
-            Span orderSpan = GlobalTracer.get().buildSpan("order_span").start();
-            request.setAttribute("span", orderSpan);
-```
+.. code:: python
 
-And then, at the end of this same method:
+    from opentelemetry.ext.wsgi import OpenTelemetryMiddleware
 
-```java
-            Utils.writeJSON(response, statusRes);
-            orderSpan.finish();
-        }
-```
+Add this line under `BLOCK 2` also:
 
-Here we are creating a top level span that will be the parent of all the traced
-operations happening when ordering a set of donuts, and after that we store it
-in our `HttpServletRequest` object, so we can retrive this information next. In
-`microdonuts/src/main/java/com/otsample/api/KitchenConsumer.java` inside
-`addDonut` add a `TagWrapper` instance with the parent span:
+.. code:: python
 
-```java
-    Span parentSpan = (Span) request.getAttribute("span");
-    Request req = new Request.Builder()
-        .url("http://127.0.0.1:10001/kitchen/add_donut")
-        .post(body)
-        .tag(new TagWrapper(parentSpan.context())) 
-        .build();
+    app.wsgi_app = OpenTelemetryMiddleware(app.wsgi_app)
 
-```
+Add an exporter
+...............
 
-This way, we are marking these requests as children of our main Span, and they
-will appear in the tracer properly organized, as belonging to the same
-operation.
+An exporter is necessary for the span data to be displayed. We'll use the
+`ConsoleExporter` in this example, an exporter that simply prints the span data
+into the console. Add these lines under `BLOCK 0`:
 
-And we're done! Buy some donuts, check out the spans under the `MicroDonuts`
-component and notice how the order and polling requests are now grouped under a
-single span, with timing information for the entire operation.
+.. code:: python
 
-### Step 4: Have fun
+    from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+    from opentelemetry.sdk.trace.export import SimpleExportSpanProcessor
 
-If you still have time, try to trace other things and/or improve the instrumentation. For example:
+Add this line under `BLOCK 1`:
 
-- Maybe we would like to have an overarching span when calling the `status`
-  operation (the one polling the status of the order) at the `StatusServlet`
-  and the `KitchenConsumer.getDonuts` call, like we did in the previous step
-  with `OrderServlet` and `KitchenConsumer.addDonut`
-- The automatic span names are sometimes overly general (e.g., "post"): try to
-  override them with something more revealing
-- Add span tags to make traces more self-descriptive and contextualized
+.. code:: python
 
-## Thanks for playing, and welcome to OpenTracing!
+    tracer.add_span_processor(
+        SimpleExportSpanProcessor(ConsoleSpanExporter())
+    )
+
+
+Step 3: Have fun
+----------------
+
+You can run the walkthrough again as explained before. You should see the span
+data displayed in the console.
+
+Thanks for playing, and welcome to OpenTelemetry!
 
 Thanks for joining us in this walkthrough! Hope you enjoyed it. If you did, let
-us know, and consider spreading the love! 
+us know, and consider spreading the love!
 
-A great way to get the feel for OpenTracing is to try your hand at
-instrumenting the OSS servers, frameworks, and client libraries that we all
-share. If you make one, consider adding it to the growing ecosystem at
-http://github.com/opentracing-contrib. If you maintain a library yourself,
-plase consider adding built-in OT support.
-
-We also need walkthroughs for languages other than Golang. Feel free to reuse
-the client, protobufs, and other assets from here if you'd like to make one.
-
-For a more detailed explanation of OSS Instrumentation, check out the Turnkey
-Tracing proposal at http://bit.ly/turnkey-tracing.
-
-_Aloha!_
+*Aloha!*
