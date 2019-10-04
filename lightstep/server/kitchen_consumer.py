@@ -28,6 +28,7 @@ class KitchenConsumer(object):
             donut = Donut(
                 donut_data['flavor'],
                 donut_data['order_id'],
+                donut_data['status']
             )
 
             if donut.order_id == order_id:

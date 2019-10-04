@@ -25,6 +25,9 @@ class Fryer(Thread):
 
             donut = self._queue.get()
 
+            print('XXXXXXXXXXXXX')
+            print(donut)
+
             if donut.status == 'new_order':
 
                 donut.status = 'received'

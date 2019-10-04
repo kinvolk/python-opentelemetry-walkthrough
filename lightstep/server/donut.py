@@ -1,13 +1,10 @@
-from status import NEW_ORDER
-
-
 class Donut(object):
 
-    def __init__(self, flavor, order_id):
+    def __init__(self, flavor, order_id, status):
 
         self.flavor = flavor
         self.order_id = order_id
-        self.status = NEW_ORDER
+        self.status = status
 
 
 __all__ = ['Donut']

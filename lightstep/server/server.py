@@ -3,10 +3,6 @@ from uuid import uuid4
 
 from flask import Flask, request, render_template
 
-from kitchen_service import KitchenService
-from kitchen_consumer import KitchenConsumer
-from donut import Donut
-
 import opentelemetry.ext.http_requests
 from opentelemetry import trace, propagators
 from opentelemetry.sdk.trace import Tracer
@@ -15,6 +11,11 @@ from opentelemetry.ext.http_requests import enable
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from opentelemetry.sdk.trace.export import SimpleExportSpanProcessor
 from opentelemetry.sdk.context.propagation.b3_format import B3Format
+
+from kitchen_service import KitchenService
+from kitchen_consumer import KitchenConsumer
+from donut import Donut
+from status import NEW_ORDER
 
 
 # Set the factory to be used to create the tracer
@@ -80,7 +81,11 @@ def status():
 def add_donut(*args, **kwargs):
 
     kitchen_service.add_donut(
-        Donut(request.form['flavor'], request.form['order_id'])
+        Donut(
+            request.form['flavor'],
+            request.form['order_id'],
+            NEW_ORDER
+        )
     )
 
     return '200'
